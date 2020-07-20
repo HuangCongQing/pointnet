@@ -22,17 +22,17 @@ If you find our work useful in your research, please consider citing:
    
 ### Installation
 
-Install <a href="https://www.tensorflow.org/get_started/os_setup" target="_blank">TensorFlow</a>. You may also need to install h5py. The code has been tested with Python 2.7, TensorFlow 1.0.1, CUDA 8.0 and cuDNN 5.1 on Ubuntu 14.04.
-
-If you are using PyTorch, you can find a third-party pytorch implementation <a href="https://github.com/fxia22/pointnet.pytorch" target="_blank">here</a>.
-
-To install h5py for Python:
-```bash
-sudo apt-get install libhdf5-dev
-sudo pip install h5py
+```shell
+环境配置：微软 AzureUser@aitraining: Ubuntu18,04 python=3.6  cudatoolkit=9.0 cudnn=7.3.1 tensorflow-gpu==1.11
+conda create -n pointnet python=3.6
+source activate pointnet
+conda install cudatoolkit=9.0 cudnn=7.3.1
+pip install tensorflow-gpu==1.11
 ```
 
 ### Usage
+
+#### classification 分类
 To train a model to classify point clouds sampled from 3D shapes:
 
     python train.py
@@ -55,7 +55,7 @@ Point clouds that are wrongly classified will be saved to `dump` folder in defau
 
 If you'd like to prepare your own data, you can refer to some helper functions in `utils/data_prep_util.py` for saving and loading HDF5 files.
 
-### Part Segmentation
+####  Part Segmentation(部件分类) 
 To train a model for object part segmentation, firstly download the data:
 
     cd part_seg
@@ -64,6 +64,8 @@ To train a model for object part segmentation, firstly download the data:
 The downloading script will download <a href="http://web.stanford.edu/~ericyi/project_page/part_annotation/index.html" target="_blank">ShapeNetPart</a> dataset (around 1.08GB) and our prepared HDF5 files (around 346MB).
 
 Then you can run `train.py` and `test.py` in the `part_seg` folder for training and testing (computing mIoU for evaluation).
+
+#### Semantic Segmentation语义分割
 
 ### License
 Our code is released under MIT License (see LICENSE file for details).
