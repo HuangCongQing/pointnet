@@ -2,7 +2,17 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
-# my data
+*.zip
+# 分类数据集 data
 data/
 log/
+
+# part_seg
+part_seg/PartAnnotation/
+hdf5_data/
+
+
+part_seg/train_results/
+# sem_seg
+
+sem_seg/train_results/
