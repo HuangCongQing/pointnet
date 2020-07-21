@@ -8,11 +8,12 @@ data/
 log/
 
 # part_seg
+## 数据
 part_seg/PartAnnotation/
 hdf5_data/
 
-
+## 输出结果
 part_seg/train_results/
 # sem_seg
-
-sem_seg/train_results/
+## 数据
+sem_seg/indoor3d_sem_seg_hdf5_data/
