@@ -63,7 +63,7 @@ def get_model(point_cloud, is_training, bn_decay=None):
     global_feat_expand = tf.tile(global_feat, [1, num_point, 1, 1])
     concat_feat = tf.concat(3, [point_feat, global_feat_expand])
     print(concat_feat)
-
+    # 定义分割的mpl512-256-128  128-m, m为点所属的类别数目
     net = tf_util.conv2d(concat_feat, 512, [1,1],
                          padding='VALID', stride=[1,1],
                          bn=True, is_training=is_training,
@@ -108,7 +108,7 @@ def get_loss(pred, label, end_points, reg_weight=0.001):
 
 
 if __name__=='__main__':
-    with tf.Graph().as_default():
+    with tf.Graph().as_default():  # with … as… 一种初始化语句
         inputs = tf.zeros((32,1024,3))
         outputs = get_model(inputs, tf.constant(True))
         print(outputs)

@@ -49,6 +49,12 @@ def _variable_with_weight_decay(name, shape, stddev, wd, use_xavier=True):
   return var
 
 
+''' mlp网络的定义如下，其输入为点云数据，每一个点云作为一个batch
+
+首先将三通道的点云拓展为4-D的张量，tf.expend_dims()将得到batchn3*1的数据作为网络的输入
+随后构建网络，利用1*1的卷积来实现全连接。每一层单元依次为64-128-1024-512-256的网络结构
+'''
+
 def conv1d(inputs,
            num_output_channels,
            kernel_size,

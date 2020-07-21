@@ -57,7 +57,7 @@ def get_model(point_cloud, is_training, bn_decay=None):
     # Symmetric function: max pooling
     net = tf_util.max_pool2d(net, [num_point,1],
                              padding='VALID', scope='maxpool')
-
+    # 定义分类的mpl512-256-k, k为分类类别数目
     net = tf.reshape(net, [batch_size, -1])
     net = tf_util.fully_connected(net, 512, bn=True, is_training=is_training,
                                   scope='fc1', bn_decay=bn_decay)
