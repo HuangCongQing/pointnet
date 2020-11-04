@@ -3,6 +3,7 @@ Created by <a href="http://charlesrqi.com" target="_blank">Charles R. Qi</a>, <a
 
 ![prediction example](https://github.com/charlesq34/pointnet/blob/master/doc/teaser.png)
 
+@[双愚](https://github.com/HuangCongQing) modified 
    
 ### Installation
 
