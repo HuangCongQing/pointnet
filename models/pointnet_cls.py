@@ -7,9 +7,9 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(BASE_DIR)
 sys.path.append(os.path.join(BASE_DIR, '../utils'))
 import tf_util
-from transform_nets import input_transform_net, feature_transform_net
+from transform_nets import input_transform_net, feature_transform_net # 引用T-Net
 
-# 添加float和int的占位符，让pointcloud_pl, label_pl形式符合batchsize
+# 根据shape向pointclouds_pl, labels_pl中添加float32和int32的占位符   添加float和int的占位符，让pointcloud_pl, label_pl形式符合batchsize
 def placeholder_inputs(batch_size, num_point):
     pointclouds_pl = tf.placeholder(tf.float32, shape=(batch_size, num_point, 3))
     labels_pl = tf.placeholder(tf.int32, shape=(batch_size))
@@ -25,6 +25,7 @@ def get_model(point_cloud, is_training, bn_decay=None):
     with tf.variable_scope('transform_net1') as sc:
         transform = input_transform_net(point_cloud, is_training, bn_decay, K=3)
     point_cloud_transformed = tf.matmul(point_cloud, transform)
+    #通过T-net网络
     input_image = tf.expand_dims(point_cloud_transformed, -1)
 
     net = tf_util.conv2d(input_image, 64, [1,3],
@@ -35,7 +36,7 @@ def get_model(point_cloud, is_training, bn_decay=None):
                          padding='VALID', stride=[1,1],
                          bn=True, is_training=is_training,
                          scope='conv2', bn_decay=bn_decay)
-
+#tf_util包中conv2d，首先进入的是input_image，然后连接到下一个net
     with tf.variable_scope('transform_net2') as sc:
         transform = feature_transform_net(net, is_training, bn_decay, K=64)
     end_points['transform'] = transform
@@ -54,10 +55,11 @@ def get_model(point_cloud, is_training, bn_decay=None):
                          padding='VALID', stride=[1,1],
                          bn=True, is_training=is_training,
                          scope='conv5', bn_decay=bn_decay)
-
+#再接着进入conv345
     # Symmetric function: max pooling
     net = tf_util.max_pool2d(net, [num_point,1],
                              padding='VALID', scope='maxpool')
+#conv5进入pool
     # 定义分类的mpl512-256-k, k为分类类别数目
     net = tf.reshape(net, [batch_size, -1])
     net = tf_util.fully_connected(net, 512, bn=True, is_training=is_training,
