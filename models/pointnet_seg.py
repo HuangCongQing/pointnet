@@ -8,7 +8,7 @@ sys.path.append(BASE_DIR)
 sys.path.append(os.path.join(BASE_DIR, '../utils'))
 import tf_util
 from transform_nets import input_transform_net, feature_transform_net
-
+# 添加float和int的占位符，让pointcloud_pl, label_pl形式符合batchsize
 def placeholder_inputs(batch_size, num_point):
     pointclouds_pl = tf.placeholder(tf.float32,
                                      shape=(batch_size, num_point, 3))
