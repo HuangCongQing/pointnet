@@ -26,8 +26,8 @@ def shuffle_data(data, labels):
         Return:
           shuffled data, label and shuffle indices
     """
-    idx = np.arange(len(labels))
-    np.random.shuffle(idx) # 随机打乱数据
+    idx = np.arange(len(labels))     #arange创建等差数列，0到最大值，也就是labels的编号 
+    np.random.shuffle(idx) # 随机打乱idx
     return data[idx, ...], labels[idx], idx # 打乱后点的idx
 
 # 随机旋转点云  沿向上方向转
@@ -39,16 +39,17 @@ def rotate_point_cloud(batch_data):
         Return:
           BxNx3 array, rotated batch of point clouds
     """
-    rotated_data = np.zeros(batch_data.shape, dtype=np.float32)
+    rotated_data = np.zeros(batch_data.shape, dtype=np.float32)  # 根据batch_data的矩阵结构，构造一个元素都是0的矩阵
     for k in range(batch_data.shape[0]):
-        rotation_angle = np.random.uniform() * 2 * np.pi # 设置旋转角度
+        rotation_angle = np.random.uniform() * 2 * np.pi # 设置旋转角度 #随机的一个转角
         cosval = np.cos(rotation_angle)
         sinval = np.sin(rotation_angle)
         rotation_matrix = np.array([[cosval, 0, sinval],
                                     [0, 1, 0],
-                                    [-sinval, 0, cosval]])
+                                    [-sinval, 0, cosval]])  #旋转矩阵
         shape_pc = batch_data[k, ...]
         rotated_data[k, ...] = np.dot(shape_pc.reshape((-1, 3)), rotation_matrix)
+         #一个shape_pc内切成无数个3元素的数组
     return rotated_data
 
 # 定角度旋转
@@ -81,7 +82,7 @@ def jitter_point_cloud(batch_data, sigma=0.01, clip=0.05):
     """
     B, N, C = batch_data.shape
     assert(clip > 0)
-    jittered_data = np.clip(sigma * np.random.randn(B, N, C), -1*clip, clip)
+    jittered_data = np.clip(sigma * np.random.randn(B, N, C), -1*clip, clip) #正负clip间的正态分布加到batch_data
     jittered_data += batch_data # 加入正太分布的噪声
     return jittered_data
 
