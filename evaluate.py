@@ -48,13 +48,15 @@ TRAIN_FILES = provider.getDataFiles( \
 TEST_FILES = provider.getDataFiles(\
     os.path.join(BASE_DIR, 'data/modelnet40_ply_hdf5_2048/test_files.txt'))
 
+# log记录函数
 def log_string(out_str):
     LOG_FOUT.write(out_str+'\n')
     LOG_FOUT.flush()
     print(out_str)
 
+# 储存一次参数 ，调用一次eval_one_epoch
 def evaluate(num_votes):
-    is_training = False
+    is_training = False # 正在训练
      
     with tf.device('/gpu:'+str(GPU_INDEX)):
         pointclouds_pl, labels_pl = MODEL.placeholder_inputs(BATCH_SIZE, NUM_POINT)
@@ -63,6 +65,9 @@ def evaluate(num_votes):
         # simple model
         pred, end_points = MODEL.get_model(pointclouds_pl, is_training_pl)
         loss = MODEL.get_loss(pred, labels_pl, end_points)
+		#计算出代价，为了计算loss的和，用于后面
+		#eval_one_epoch函数计算mean loss：loss_sum/total_seen
+		#其中batch的合就是total_seen
         
         # Add ops to save and restore all the variables.
         saver = tf.train.Saver()
@@ -85,8 +90,9 @@ def evaluate(num_votes):
            'loss': loss}
 
     eval_one_epoch(sess, ops, num_votes)
+    #evalucate函数是估计一次保存一次相关数据
 
-   
+#   每个epoch的eveluate函数
 def eval_one_epoch(sess, ops, num_votes=1, topk=1):
     error_cnt = 0
     is_training = False
@@ -101,6 +107,7 @@ def eval_one_epoch(sess, ops, num_votes=1, topk=1):
         current_data, current_label = provider.loadDataFile(TEST_FILES[fn])
         current_data = current_data[:,0:NUM_POINT,:]
         current_label = np.squeeze(current_label)
+		#squeeze把current_label降为秩为1 ，显示出来
         print(current_data.shape)
         
         file_size = current_data.shape[0]
@@ -157,7 +164,7 @@ def eval_one_epoch(sess, ops, num_votes=1, topk=1):
     log_string('eval mean loss: %f' % (loss_sum / float(total_seen)))
     log_string('eval accuracy: %f' % (total_correct / float(total_seen)))
     log_string('eval avg class acc: %f' % (np.mean(np.array(total_correct_class)/np.array(total_seen_class,dtype=np.float))))
-    
+    #log估计结果
     class_accuracies = np.array(total_correct_class)/np.array(total_seen_class,dtype=np.float)
     for i, name in enumerate(SHAPE_NAMES):
         log_string('%10s:\t%0.3f' % (name, class_accuracies[i]))
