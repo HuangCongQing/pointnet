@@ -9,12 +9,13 @@ sys.path.append(os.path.join(BASE_DIR, '../utils'))
 import tf_util
 from transform_nets import input_transform_net, feature_transform_net
 
+# 添加float和int的占位符，让pointcloud_pl, label_pl形式符合batchsize
 def placeholder_inputs(batch_size, num_point):
     pointclouds_pl = tf.placeholder(tf.float32, shape=(batch_size, num_point, 3))
     labels_pl = tf.placeholder(tf.int32, shape=(batch_size))
     return pointclouds_pl, labels_pl
 
-
+# 一层一层得到网络结构（INPUT BxNx3  Output Bx40）
 def get_model(point_cloud, is_training, bn_decay=None):
     """ Classification PointNet, input is BxNx3, output Bx40 """
     batch_size = point_cloud.get_shape()[0].value
@@ -71,7 +72,7 @@ def get_model(point_cloud, is_training, bn_decay=None):
 
     return net, end_points
 
-
+# 总loss=classify_loss + mat_diff_loss * reg_weight
 def get_loss(pred, label, end_points, reg_weight=0.001):
     """ pred: B*NUM_CLASSES,
         label: B, """
@@ -92,6 +93,6 @@ def get_loss(pred, label, end_points, reg_weight=0.001):
 
 if __name__=='__main__':
     with tf.Graph().as_default():
-        inputs = tf.zeros((32,1024,3))
+        inputs = tf.zeros((32,1024,3))  # 输入
         outputs = get_model(inputs, tf.constant(True))
         print(outputs)
