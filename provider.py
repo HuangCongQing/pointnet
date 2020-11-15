@@ -5,9 +5,9 @@ import h5py
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(BASE_DIR)
 
-# Download dataset for point cloud classification
+# Download dataset for point cloud classification  下载点云分类数据集
 DATA_DIR = os.path.join(BASE_DIR, 'data')
-if not os.path.exists(DATA_DIR):
+if not os.path.exists(DATA_DIR): # 是否包含data数据集
     os.mkdir(DATA_DIR)
 if not os.path.exists(os.path.join(DATA_DIR, 'modelnet40_ply_hdf5_2048')):
     www = 'https://shapenet.cs.stanford.edu/media/modelnet40_ply_hdf5_2048.zip'
@@ -17,7 +17,7 @@ if not os.path.exists(os.path.join(DATA_DIR, 'modelnet40_ply_hdf5_2048')):
     os.system('mv %s %s' % (zipfile[:-4], DATA_DIR))
     os.system('rm %s' % (zipfile))
 
-
+# 在B这个维度上随机打乱数据。注释中输入维度B：batch_size， N：num_points
 def shuffle_data(data, labels):
     """ Shuffle data and labels.
         Input:
@@ -27,10 +27,10 @@ def shuffle_data(data, labels):
           shuffled data, label and shuffle indices
     """
     idx = np.arange(len(labels))
-    np.random.shuffle(idx)
-    return data[idx, ...], labels[idx], idx
+    np.random.shuffle(idx) # 随机打乱数据
+    return data[idx, ...], labels[idx], idx # 打乱后点的idx
 
-
+# 随机旋转点云  沿向上方向转
 def rotate_point_cloud(batch_data):
     """ Randomly rotate the point clouds to augument the dataset
         rotation is per shape based along up direction
@@ -41,7 +41,7 @@ def rotate_point_cloud(batch_data):
     """
     rotated_data = np.zeros(batch_data.shape, dtype=np.float32)
     for k in range(batch_data.shape[0]):
-        rotation_angle = np.random.uniform() * 2 * np.pi
+        rotation_angle = np.random.uniform() * 2 * np.pi # 设置旋转角度
         cosval = np.cos(rotation_angle)
         sinval = np.sin(rotation_angle)
         rotation_matrix = np.array([[cosval, 0, sinval],
@@ -51,7 +51,7 @@ def rotate_point_cloud(batch_data):
         rotated_data[k, ...] = np.dot(shape_pc.reshape((-1, 3)), rotation_matrix)
     return rotated_data
 
-
+# 定角度旋转
 def rotate_point_cloud_by_angle(batch_data, rotation_angle):
     """ Rotate the point cloud along up direction with certain angle.
         Input:
@@ -71,7 +71,7 @@ def rotate_point_cloud_by_angle(batch_data, rotation_angle):
         rotated_data[k, ...] = np.dot(shape_pc.reshape((-1, 3)), rotation_matrix)
     return rotated_data
 
-
+# bath中加入正太分布的噪声
 def jitter_point_cloud(batch_data, sigma=0.01, clip=0.05):
     """ Randomly jitter points. jittering is per point.
         Input:
@@ -82,21 +82,26 @@ def jitter_point_cloud(batch_data, sigma=0.01, clip=0.05):
     B, N, C = batch_data.shape
     assert(clip > 0)
     jittered_data = np.clip(sigma * np.random.randn(B, N, C), -1*clip, clip)
-    jittered_data += batch_data
+    jittered_data += batch_data # 加入正太分布的噪声
     return jittered_data
 
+# 下面函数都是文件信息
+# 得到文件中每一行数据(此代码中每行数据为文件路径)
 def getDataFiles(list_filename):
     return [line.rstrip() for line in open(list_filename)]
 
+# 加载h5文件
 def load_h5(h5_filename):
     f = h5py.File(h5_filename)
     data = f['data'][:]
     label = f['label'][:]
-    return (data, label)
+    return (data, label) # 返回数据和标签
 
+# 加载h5文件
 def loadDataFile(filename):
     return load_h5(filename)
 
+# 加载带label和seg的h5数据
 def load_h5_data_label_seg(h5_filename):
     f = h5py.File(h5_filename)
     data = f['data'][:]
@@ -104,6 +109,6 @@ def load_h5_data_label_seg(h5_filename):
     seg = f['pid'][:]
     return (data, label, seg)
 
-
+# 
 def loadDataFile_with_seg(filename):
     return load_h5_data_label_seg(filename)
