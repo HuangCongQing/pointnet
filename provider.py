@@ -71,7 +71,7 @@ def rotate_point_cloud_by_angle(batch_data, rotation_angle):
         rotated_data[k, ...] = np.dot(shape_pc.reshape((-1, 3)), rotation_matrix)
     return rotated_data
 
-# bath中加入正太分布的噪声
+# bath中加入正态分布的噪声
 def jitter_point_cloud(batch_data, sigma=0.01, clip=0.05):
     """ Randomly jitter points. jittering is per point.
         Input:
