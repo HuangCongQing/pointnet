@@ -42,9 +42,9 @@ SHAPE_NAMES = [line.rstrip() for line in \
 
 HOSTNAME = socket.gethostname()
 
-# ModelNet40 official train/test split
+# ModelNet40 official train/test split  官方训练测试文件
 TRAIN_FILES = provider.getDataFiles( \
-    os.path.join(BASE_DIR, 'data/modelnet40_ply_hdf5_2048/train_files.txt'))
+    os.path.join(BASE_DIR, 'data/modelnet40_ply_hdf5_2048/train_files.txt')) 
 TEST_FILES = provider.getDataFiles(\
     os.path.join(BASE_DIR, 'data/modelnet40_ply_hdf5_2048/test_files.txt'))
 
