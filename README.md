@@ -5,6 +5,8 @@ Created by <a href="http://charlesrqi.com" target="_blank">Charles R. Qi</a>, <a
 
 @[双愚](https://github.com/HuangCongQing) modified 
    
+个人笔记： https://www.yuque.com/huangzhongqing/hre6tf/drr1pw
+
 ### Installation
 
 ```shell
