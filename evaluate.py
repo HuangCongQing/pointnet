@@ -154,7 +154,7 @@ def eval_one_epoch(sess, ops, num_votes=1, topk=1):
                 fout.write('%d, %d\n' % (pred_val[i-start_idx], l))
                 
                 if pred_val[i-start_idx] != l and FLAGS.visu: # ERROR CASE, DUMP!
-                    img_filename = '%d_label_%s_pred_%s.jpg' % (error_cnt, SHAPE_NAMES[l],
+                    img_filename = '%d_label_%s_pred_%s.jpg' % (error_cnt, SHAPE_NAMES[l],  # 图片存储
                                                            SHAPE_NAMES[pred_val[i-start_idx]])
                     img_filename = os.path.join(DUMP_DIR, img_filename)
                     output_img = pc_util.point_cloud_three_views(np.squeeze(current_data[i, :, :]))
