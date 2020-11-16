@@ -1,3 +1,4 @@
+#coding=utf-8
 """ Wrapper functions for TensorFlow layers.
 
 Author: Charles R. Qi
