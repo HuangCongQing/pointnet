@@ -17,7 +17,7 @@ import pc_util
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--gpu', type=int, default=0, help='GPU to use [default: GPU 0]')
+parser.add_argument('--gpu', type=int, default=0, help='GPU to use [default: GPU 0]') # 默认在GPU:0上执行：
 parser.add_argument('--model', default='pointnet_cls', help='Model name: pointnet_cls or pointnet_cls_basic [default: pointnet_cls]')
 parser.add_argument('--batch_size', type=int, default=4, help='Batch Size during training [default: 1]')
 parser.add_argument('--num_point', type=int, default=1024, help='Point Number [256/512/1024/2048] [default: 1024]')
@@ -59,7 +59,7 @@ def log_string(out_str):
 def evaluate(num_votes):
     is_training = False # 正在训练
      
-    with tf.device('/gpu:'+str(GPU_INDEX)):
+    with tf.device('/gpu:'+str(GPU_INDEX)):  # 默认在GPU:0上执行：
         pointclouds_pl, labels_pl = MODEL.placeholder_inputs(BATCH_SIZE, NUM_POINT)
         is_training_pl = tf.placeholder(tf.bool, shape=())
 
