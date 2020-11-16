@@ -115,10 +115,10 @@ def conv1d(inputs,
 
 
 
-
+# conv2d定义 # 卷积核大小
 def conv2d(inputs,
            num_output_channels,
-           kernel_size,
+           kernel_size, 
            scope,
            stride=[1, 1],
            padding='SAME',
