@@ -62,6 +62,7 @@ def get_model(point_cloud, is_training, bn_decay=None):
                              padding='VALID', scope='maxpool')
 #conv5进入pool
     # 定义分类的mpl512-256-k, k为分类类别数目
+    #   # PointNet利用了一个三层感知机MPL(512–256–40)来对特征进行学习，最终实现了对于40类的分类.
     net = tf.reshape(net, [batch_size, -1])
     net = tf_util.fully_connected(net, 512, bn=True, is_training=is_training,
                                   scope='fc1', bn_decay=bn_decay)
@@ -71,7 +72,7 @@ def get_model(point_cloud, is_training, bn_decay=None):
                                   scope='fc2', bn_decay=bn_decay)
     net = tf_util.dropout(net, keep_prob=0.7, is_training=is_training,
                           scope='dp2')
-    net = tf_util.fully_connected(net, 40, activation_fn=None, scope='fc3')
+    net = tf_util.fully_connected(net, 40, activation_fn=None, scope='fc3') 
 
     return net, end_points
 
