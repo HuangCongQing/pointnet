@@ -169,7 +169,7 @@ def train():
             
             # Save the variables to disk.
             if epoch % 10 == 0:  # 10次一循环 #10个EPOCH一次save
-                save_path = saver.save(sess, os.path.join(LOG_DIR, "model.ckpt"))
+                save_path = saver.save(sess, os.path.join(LOG_DIR, "model.ckpt"))  # 保存模型
                 log_string("Model saved in file: %s" % save_path)
 
 

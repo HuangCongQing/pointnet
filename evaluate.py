@@ -21,7 +21,7 @@ parser.add_argument('--gpu', type=int, default=0, help='GPU to use [default: GPU
 parser.add_argument('--model', default='pointnet_cls', help='Model name: pointnet_cls or pointnet_cls_basic [default: pointnet_cls]')
 parser.add_argument('--batch_size', type=int, default=4, help='Batch Size during training [default: 1]')
 parser.add_argument('--num_point', type=int, default=1024, help='Point Number [256/512/1024/2048] [default: 1024]')
-parser.add_argument('--model_path', default='log/model.ckpt', help='model checkpoint file path [default: log/model.ckpt]')
+parser.add_argument('--model_path', default='log/model.ckpt', help='model checkpoint file path [default: log/model.ckpt]') # 模型路径
 parser.add_argument('--dump_dir', default='dump', help='dump folder path [dump]')
 parser.add_argument('--visu', action='store_true', help='Whether to dump image for error case [default: False]')
 FLAGS = parser.parse_args()
@@ -29,7 +29,7 @@ FLAGS = parser.parse_args()
 
 BATCH_SIZE = FLAGS.batch_size
 NUM_POINT = FLAGS.num_point
-MODEL_PATH = FLAGS.model_path
+MODEL_PATH = FLAGS.model_path# 模型路径
 GPU_INDEX = FLAGS.gpu
 MODEL = importlib.import_module(FLAGS.model) # import network module
 DUMP_DIR = FLAGS.dump_dir
@@ -37,11 +37,11 @@ if not os.path.exists(DUMP_DIR): os.mkdir(DUMP_DIR)
 LOG_FOUT = open(os.path.join(DUMP_DIR, 'log_evaluate.txt'), 'w') # log存储路径
 LOG_FOUT.write(str(FLAGS)+'\n')
 
-NUM_CLASSES = 40
+NUM_CLASSES = 40 # 分类40类别
 SHAPE_NAMES = [line.rstrip() for line in \
-    open(os.path.join(BASE_DIR, 'data/modelnet40_ply_hdf5_2048/shape_names.txt'))] 
+    open(os.path.join(BASE_DIR, 'data/modelnet40_ply_hdf5_2048/shape_names.txt'))] # 分类label名
 
-HOSTNAME = socket.gethostname()
+HOSTNAME = socket.gethostname() # ？？？
 
 # ModelNet40 official train/test split  官方训练测试文件
 TRAIN_FILES = provider.getDataFiles( \
@@ -71,7 +71,7 @@ def evaluate(num_votes):
 		#其中batch的合就是total_seen
         
         # Add ops to save and restore all the variables.
-        saver = tf.train.Saver()
+        saver = tf.train.Saver() # 保存模型
         
     # Create a session
     config = tf.ConfigProto() # 配置Session运行参数
@@ -81,7 +81,7 @@ def evaluate(num_votes):
     sess = tf.Session(config=config)
 
     # Restore variables from disk.
-    saver.restore(sess, MODEL_PATH)
+    saver.restore(sess, MODEL_PATH) # 使用restore（）方法恢复模型的变量参数。
     log_string("Model restored.")
 
     ops = {'pointclouds_pl': pointclouds_pl,
