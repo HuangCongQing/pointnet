@@ -74,7 +74,7 @@ def evaluate(num_votes):
         saver = tf.train.Saver()
         
     # Create a session
-    config = tf.ConfigProto()
+    config = tf.ConfigProto() # 配置Session运行参数
     config.gpu_options.allow_growth = True
     config.allow_soft_placement = True
     config.log_device_placement = True
