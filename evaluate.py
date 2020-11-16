@@ -1,3 +1,4 @@
+#coding=utf-8
 import tensorflow as tf
 import numpy as np
 import argparse
@@ -33,7 +34,7 @@ GPU_INDEX = FLAGS.gpu
 MODEL = importlib.import_module(FLAGS.model) # import network module
 DUMP_DIR = FLAGS.dump_dir
 if not os.path.exists(DUMP_DIR): os.mkdir(DUMP_DIR)
-LOG_FOUT = open(os.path.join(DUMP_DIR, 'log_evaluate.txt'), 'w')
+LOG_FOUT = open(os.path.join(DUMP_DIR, 'log_evaluate.txt'), 'w') # log存储路径
 LOG_FOUT.write(str(FLAGS)+'\n')
 
 NUM_CLASSES = 40
