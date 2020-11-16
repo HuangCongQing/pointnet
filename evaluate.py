@@ -90,7 +90,7 @@ def evaluate(num_votes):
            'pred': pred,
            'loss': loss}
 
-    eval_one_epoch(sess, ops, num_votes)
+    eval_one_epoch(sess, ops, num_votes)  # num_votes = 1
     #evalucate函数是估计一次保存一次相关数据
 
 #   每个epoch的eveluate函数
