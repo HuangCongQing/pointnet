@@ -99,28 +99,33 @@ def get_bn_decay(batch):
 
 # 调用 训练功能函数  和 评估功能函数
 def train():
-    with tf.Graph().as_default():
+    with tf.Graph().as_default():  # 将这个类实例，运行环境的默认图，如果只有一个主线程不写也没有关系
         with tf.device('/gpu:'+str(GPU_INDEX)):
             pointclouds_pl, labels_pl = MODEL.placeholder_inputs(BATCH_SIZE, NUM_POINT) #models/pointnet_cls.py  pointclouds_pl: shape(32, 1024, 3)    label_pl: shape=(32, ) def placeholder_inputs(batch_size, num_point):
             is_training_pl = tf.placeholder(tf.bool, shape=())
             print(is_training_pl )  # 输出
             
-            # Note the global_step=batch parameter to minimize. 
+            # Note the global_step=batch parameter to minimize.  # globe_step初始化为0，每次自动加1
             # That tells the optimizer to helpfully increment the 'batch' parameter for you every time it trains.
-            batch = tf.Variable(0)  # batch ???
-            bn_decay = get_bn_decay(batch)
+            batch = tf.Variable(0)  #创建一个变量,初始化为 0
+            bn_decay = get_bn_decay(batch) # 批训练时， 得到 batch 的衰减率
             tf.summary.scalar('bn_decay', bn_decay) #衰减  tf.summary.scalar(),用于收集标量信息
 
             # Get model and loss 
+            # 创建的数据处理网络为pred，调用 model\pointnet_cls 下的get_model()得到。由get_model()可知，pred的维度为B×N×40，40为分出的类别
+            # Channel数，对应40个分类标签。每个点的这40个值最大的一个的下标即为所预测的分类标签。
+            # 首先使用共享参数的MLP对每个点进行特征提取，再使用MaxPooling在特征维进行池化操作，使得网络对不同数量点的点云产生相同维度的特征向量，
+            # 且输出对输入点的顺序产生不变性。在得到固定维度的特征向量之后，再使用一个MLP对其进行分类
             pred, end_points = MODEL.get_model(pointclouds_pl, is_training_pl, bn_decay=bn_decay) # pred（32，40）end_points（32，64，64）（INPUT BxNx3  Output Bx40）
-            loss = MODEL.get_loss(pred, labels_pl, end_points)
+            loss = MODEL.get_loss(pred, labels_pl, end_points) #  # 调用pointnet_cls下的get_loss（）
             tf.summary.scalar('loss', loss)#代价
 
-            correct = tf.equal(tf.argmax(pred, 1), tf.to_int64(labels_pl)) # 判断相等
+            # # tf.argmax(pred, 2) 返回pred C 这个维度的最大值索引返回相同维度的bool值矩阵
+            correct = tf.equal(tf.argmax(pred, 1), tf.to_int64(labels_pl)) # tf.equal() 比较两个张量对应位置是否相等
             accuracy = tf.reduce_sum(tf.cast(correct, tf.float32)) / float(BATCH_SIZE) # BATCH_SIZE： 32
             tf.summary.scalar('accuracy', accuracy)#精度
 
-            # Get training operator
+            # Get training operator #获得衰减后的学习率，以及选择优化器optimizer
             learning_rate = get_learning_rate(batch)
             tf.summary.scalar('learning_rate', learning_rate)
             if OPTIMIZER == 'momentum':
@@ -128,16 +133,22 @@ def train():
             elif OPTIMIZER == 'adam':  # 默认adam
                 optimizer = tf.train.AdamOptimizer(learning_rate)
             train_op = optimizer.minimize(loss, global_step=batch)
+            # minimize的内部存在两个操作：(1)计算各个变量的梯度 (2)用梯度更新这些变量的值
+            # (1)计算loss对指定val_list的梯度（导数），返回元组列表[(gradient,variable),…]
+            # (2)用计算得到的梯度来更新对应的变量（权重）
+            # 注意：在程序中global_step初始化为0，每次更新参数时，自动加1
+            # 将minimize()分成两个步骤的原因：在某种情况下对梯度进行修正，防止梯度消失或者梯度爆炸
+
             
             # Add ops to save and restore all the variables.
             saver = tf.train.Saver()  # 保存所有变量
             
-        # Create a session
+        # Create a session  #配置session 运行参数。
         config = tf.ConfigProto()
-        config.gpu_options.allow_growth = True
-        config.allow_soft_placement = True
-        config.log_device_placement = False
-        sess = tf.Session(config=config)
+        config.gpu_options.allow_growth = True  # =True是让TensorFlow在运行过程中动态申请显存，避免过多的显存占用
+        config.allow_soft_placement = True #当指定的设备不存在时，允许选择一个存在的设备运行。比如gpu不存在，自动降到cpu上运行
+        config.log_device_placement = False  #在终端打印出各项操作是在哪个设备上运行的
+        sess = tf.Session(config=config)   # 创建 sess, 才能运行框架
 
         # Add summary writers
         #merged = tf.merge_all_summaries()
@@ -146,14 +157,15 @@ def train():
                                   sess.graph)  # 
         test_writer = tf.summary.FileWriter(os.path.join(LOG_DIR, 'test'))
 
-        # Init variables
+        # Init variables # Init variables #初始化参数，开始训练
         init = tf.global_variables_initializer()
         # To fix the bug introduced in TF 0.12.1 as in
         # http://stackoverflow.com/questions/41543774/invalidargumenterror-for-tensor-bool-tensorflow-0-12-1
         #sess.run(init)
         sess.run(init, {is_training_pl: True})
 
-        # 字典（羡慕函数的输入参数）
+        # ops 是一个字典，作为接口传入训练和评估 epoch 循环中。
+        #  pred 是数据处理网络模块；loss 是 损失函数；train_op 是优化器；batch 是当前的批次
         ops = {'pointclouds_pl': pointclouds_pl,
                'labels_pl': labels_pl,
                'is_training_pl': is_training_pl,
@@ -171,12 +183,12 @@ def train():
             eval_one_epoch(sess, ops, test_writer) # 评估功能函数
             
             # Save the variables to disk.
-            if epoch % 10 == 0:  # 10次一循环 #10个EPOCH一次save
-                save_path = saver.save(sess, os.path.join(LOG_DIR, "model.ckpt"))  # 保存模型
-                log_string("Model saved in file: %s" % save_path)
+            if epoch % 10 == 0:  # 10次一循环 #每10个epoch保存1次模型
+                save_path = saver.save(sess, os.path.join(LOG_DIR, "model.ckpt"))  # train_one_epoch 函数用来训练一个epoch
+                log_string("Model saved in file: %s" % save_path) # eval_one_epoch函数用来每运行一个epoch后evaluate在测试集的accuracy和loss
 
 
-# 训练功能函数
+# 训练功能函数（加载h5文件）
 def train_one_epoch(sess, ops, train_writer):
     """ ops: dict mapping from string to tf ops """
     is_training = True
@@ -187,20 +199,24 @@ def train_one_epoch(sess, ops, train_writer):
     
     for fn in range(len(TRAIN_FILES)):  # 循环5次
         log_string('----' + str(fn) + '-----')  # ----0-----
-        current_data, current_label = provider.loadDataFile(TRAIN_FILES[train_file_idxs[fn]])
-        current_data = current_data[:,0:NUM_POINT,:]
-        #[楼层,行,列]
+        # current_data: shape(2048, 2048, 3)     current_label:  shape(2048, 1)
+        current_data, current_label = provider.loadDataFile(TRAIN_FILES[train_file_idxs[fn]]) # 加载h5文件  返回数据和标签
+        current_data = current_data[:,0:NUM_POINT,:]  # NUM_POINT default=1024  shape(2048, 1024, 3)
+        #[楼层,行,列] 三维数组
 		#所有楼层  num行   所有列元素传给current_data
         current_data, current_label, _ = provider.shuffle_data(current_data, np.squeeze(current_label))            
         current_label = np.squeeze(current_label)
         
-        file_size = current_data.shape[0]
-        num_batches = file_size // BATCH_SIZE
+        file_size = current_data.shape[0]  #  file_size: 2048
+        num_batches = file_size // BATCH_SIZE   # 整除，计算一共有多少个批次   计算在指定BATCH_SIZE下，训练1个epoch 需要几个mini-batch训练。
+
         
         total_correct = 0
         total_seen = 0
         loss_sum = 0
-       
+        # 在一个epoch 中逐个mini-batch训练直至遍历完一遍训练集。计算总分类正确数total_correct和已遍历样本数
+        # total_senn，总损失loss_sum
+
         for batch_idx in range(num_batches):
             start_idx = batch_idx * BATCH_SIZE # 起始idx
             end_idx = (batch_idx+1) * BATCH_SIZE # 
@@ -213,14 +229,15 @@ def train_one_epoch(sess, ops, train_writer):
                          ops['is_training_pl']: is_training,}
             summary, step, _, loss_val, pred_val = sess.run([ops['merged'], ops['step'],
                 ops['train_op'], ops['loss'], ops['pred']], feed_dict=feed_dict)
-            #训练
+            #  训练，使用 tf 的 session 运行设计的框架，ops['pred'] 为整个网络，feed_dict 为网络提供的数据
             train_writer.add_summary(summary, step)
             pred_val = np.argmax(pred_val, 1)
             correct = np.sum(pred_val == current_label[start_idx:end_idx])
             total_correct += correct
             total_seen += BATCH_SIZE
             loss_sum += loss_val
-        
+
+        # 记录平均loss，以及平均accuracy。
         log_string('mean loss: %f' % (loss_sum / float(num_batches)))
         log_string('accuracy: %f' % (total_correct / float(total_seen)))
 
@@ -241,7 +258,7 @@ def eval_one_epoch(sess, ops, test_writer):
         current_label = np.squeeze(current_label)
         
         file_size = current_data.shape[0]
-        num_batches = file_size // BATCH_SIZE
+        num_batches = file_size // BATCH_SIZE  # 整除，计算一共有多少个批次
         
         for batch_idx in range(num_batches):
             start_idx = batch_idx * BATCH_SIZE

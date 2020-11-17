@@ -370,10 +370,10 @@ def max_pool2d(inputs,
     Variable tensor
   """
   with tf.variable_scope(scope) as sc:
-    kernel_h, kernel_w = kernel_size
-    stride_h, stride_w = stride
-    outputs = tf.nn.max_pool(inputs,
-                             ksize=[1, kernel_h, kernel_w, 1],
+    kernel_h, kernel_w = kernel_size  # （1024，1）
+    stride_h, stride_w = stride # （2，2）
+    outputs = tf.nn.max_pool(inputs,  # 最大池化
+                             ksize=[1, kernel_h, kernel_w, 1], # 只中间池化
                              strides=[1, stride_h, stride_w, 1],
                              padding=padding,
                              name=sc.name)
