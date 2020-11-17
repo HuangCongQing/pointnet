@@ -21,8 +21,8 @@ def input_transform_net(point_cloud, is_training, bn_decay=None, K=3):
     """ Input (XYZ) Transform Net, input is BxNx3 gray image
         Return:
             Transformation matrix of size 3xK """
-    batch_size = point_cloud.get_shape()[0].value
-    num_point = point_cloud.get_shape()[1].value
+    batch_size = point_cloud.get_shape()[0].value  # 32
+    num_point = point_cloud.get_shape()[1].value # 1024
 
     # 转为4D张量，尺寸索引轴从零开始; 如果您指定轴的负数,则从最后向后计数
     ''' 
@@ -34,7 +34,7 @@ def input_transform_net(point_cloud, is_training, bn_decay=None, K=3):
     shape(expand_dims(t2, 3)) --> [2, 3, 5, 1]
     '''
     
-    input_image = tf.expand_dims(point_cloud, -1)
+    input_image = tf.expand_dims(point_cloud, -1)  #  shape（32， 1024， 3， 1）
     # 构建T-Net模型，64--128--1024
     # 其中，tf_util.conv2d是作者自己写的函数，函数声明如下
     # 利用1*1的卷积来实现全连接。每一层单元依次为64-128-1024-512-256的网络结构
@@ -76,7 +76,7 @@ def input_transform_net(point_cloud, is_training, bn_decay=None, K=3):
     return transform
 
 
-''' 同样对于特征层的规范化处理，其输入为n64的特征输出为6464的旋转矩阵，网络结构与上面完全相同，
+''' 同样对于特征层的规范化处理，其输入为n*64的特征输出为64&64的旋转矩阵，网络结构与上面完全相同，
 只是在输入输出的维度需要变化：
  '''
 def feature_transform_net(inputs, is_training, bn_decay=None, K=64):

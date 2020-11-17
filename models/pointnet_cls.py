@@ -24,12 +24,12 @@ def get_model(point_cloud, is_training, bn_decay=None):
     end_points = {}
 
     with tf.variable_scope('transform_net1') as sc:
-        transform = input_transform_net(point_cloud, is_training, bn_decay, K=3)  # shape（32， 3， 3）
+        transform = input_transform_net(point_cloud, is_training, bn_decay, K=3)  # shape（32， 3， 3） 输入转换
     point_cloud_transformed = tf.matmul(point_cloud, transform)  # 矩阵相乘shape（32， 1024， 3） =   shape（32， 1024， 3）  *   shape（32， 3， 3）
     #通过T-net网络
     input_image = tf.expand_dims(point_cloud_transformed, -1)  # shape（32， 1024， 3， 1）  -1代表最后一维度
 
-    net = tf_util.conv2d(input_image, 64, [1,3],
+    net = tf_util.conv2d(input_image, 64, [1,3],   # 64 ：  num_output_channels  #  shape（32， 1024， 1， 64）
                          padding='VALID', stride=[1,1],
                          bn=True, is_training=is_training,
                          scope='conv1', bn_decay=bn_decay)
@@ -39,42 +39,42 @@ def get_model(point_cloud, is_training, bn_decay=None):
                          scope='conv2', bn_decay=bn_decay)
 #tf_util包中conv2d，首先进入的是input_image，然后连接到下一个net
     with tf.variable_scope('transform_net2') as sc:
-        transform = feature_transform_net(net, is_training, bn_decay, K=64)
-    end_points['transform'] = transform
-    net_transformed = tf.matmul(tf.squeeze(net, axis=[2]), transform)
-    net_transformed = tf.expand_dims(net_transformed, [2])
+        transform = feature_transform_net(net, is_training, bn_decay, K=64) # 特征转化
+    end_points['transform'] = transform # end_points（32，64，64）
+    net_transformed = tf.matmul(tf.squeeze(net, axis=[2]), transform) #  shape（32， 1024， 64）
+    net_transformed = tf.expand_dims(net_transformed, [2])  #  shape（32， 1024，1，  64）
 
-    net = tf_util.conv2d(net_transformed, 64, [1,1],
+    net = tf_util.conv2d(net_transformed, 64, [1,1],  # #  shape（32， 1024，1，  64）
                          padding='VALID', stride=[1,1],
                          bn=True, is_training=is_training,
                          scope='conv3', bn_decay=bn_decay)
-    net = tf_util.conv2d(net, 128, [1,1],
+    net = tf_util.conv2d(net, 128, [1,1],  # #  shape（32， 1024，1，  128)
                          padding='VALID', stride=[1,1],
                          bn=True, is_training=is_training,
                          scope='conv4', bn_decay=bn_decay)
-    net = tf_util.conv2d(net, 1024, [1,1],
+    net = tf_util.conv2d(net, 1024, [1,1],  # #  shape（32， 1024，1，  1024)
                          padding='VALID', stride=[1,1],
                          bn=True, is_training=is_training,
                          scope='conv5', bn_decay=bn_decay)
 #再接着进入conv345
     # Symmetric function: max pooling
-    net = tf_util.max_pool2d(net, [num_point,1],
+    net = tf_util.max_pool2d(net, [num_point,1],  #  shape（32， 1 ，1，  1024)
                              padding='VALID', scope='maxpool')
 #conv5进入pool
     # 定义分类的mpl512-256-k, k为分类类别数目
     #   # PointNet利用了一个三层感知机MPL(512–256–40)来对特征进行学习，最终实现了对于40类的分类.
-    net = tf.reshape(net, [batch_size, -1])
-    net = tf_util.fully_connected(net, 512, bn=True, is_training=is_training,
+    net = tf.reshape(net, [batch_size, -1])  #    shape（32， 1024)
+    net = tf_util.fully_connected(net, 512, bn=True, is_training=is_training,  #    shape（32， 512)
                                   scope='fc1', bn_decay=bn_decay)
-    net = tf_util.dropout(net, keep_prob=0.7, is_training=is_training,
+    net = tf_util.dropout(net, keep_prob=0.7, is_training=is_training,  
                           scope='dp1')
-    net = tf_util.fully_connected(net, 256, bn=True, is_training=is_training,
+    net = tf_util.fully_connected(net, 256, bn=True, is_training=is_training, #    shape（32， 256)
                                   scope='fc2', bn_decay=bn_decay)
     net = tf_util.dropout(net, keep_prob=0.7, is_training=is_training,
                           scope='dp2')
-    net = tf_util.fully_connected(net, 40, activation_fn=None, scope='fc3') 
+    net = tf_util.fully_connected(net, 40, activation_fn=None, scope='fc3')  #    shape（32， 40)
 
-    return net, end_points
+    return net, end_points  # 返回
 
 # 总loss=classify_loss + mat_diff_loss * reg_weight
 def get_loss(pred, label, end_points, reg_weight=0.001):

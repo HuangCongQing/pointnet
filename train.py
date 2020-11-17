@@ -112,12 +112,12 @@ def train():
             tf.summary.scalar('bn_decay', bn_decay) #衰减  tf.summary.scalar(),用于收集标量信息
 
             # Get model and loss 
-            pred, end_points = MODEL.get_model(pointclouds_pl, is_training_pl, bn_decay=bn_decay) # 一层一层得到网络结构（INPUT BxNx3  Output Bx40）
+            pred, end_points = MODEL.get_model(pointclouds_pl, is_training_pl, bn_decay=bn_decay) # pred（32，40）end_points（32，64，64）（INPUT BxNx3  Output Bx40）
             loss = MODEL.get_loss(pred, labels_pl, end_points)
             tf.summary.scalar('loss', loss)#代价
 
-            correct = tf.equal(tf.argmax(pred, 1), tf.to_int64(labels_pl))
-            accuracy = tf.reduce_sum(tf.cast(correct, tf.float32)) / float(BATCH_SIZE)
+            correct = tf.equal(tf.argmax(pred, 1), tf.to_int64(labels_pl)) # 判断相等
+            accuracy = tf.reduce_sum(tf.cast(correct, tf.float32)) / float(BATCH_SIZE) # BATCH_SIZE： 32
             tf.summary.scalar('accuracy', accuracy)#精度
 
             # Get training operator
@@ -224,7 +224,7 @@ def train_one_epoch(sess, ops, train_writer):
         log_string('mean loss: %f' % (loss_sum / float(num_batches)))
         log_string('accuracy: %f' % (total_correct / float(total_seen)))
 
-# 评估功能函数
+# 评估功能函数（测试）
 def eval_one_epoch(sess, ops, test_writer):
     """ ops: dict mapping from string to tf ops """
     is_training = False
@@ -234,7 +234,7 @@ def eval_one_epoch(sess, ops, test_writer):
     total_seen_class = [0 for _ in range(NUM_CLASSES)]
     total_correct_class = [0 for _ in range(NUM_CLASSES)]
     
-    for fn in range(len(TEST_FILES)):
+    for fn in range(len(TEST_FILES)): # 测试文件  2个h5文件
         log_string('----' + str(fn) + '-----')
         current_data, current_label = provider.loadDataFile(TEST_FILES[fn])
         current_data = current_data[:,0:NUM_POINT,:]

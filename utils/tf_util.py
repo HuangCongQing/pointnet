@@ -177,7 +177,7 @@ def conv2d(inputs,
 
 
 def conv2d_transpose(inputs,
-                     num_output_channels,
+                     num_output_channels, 
                      kernel_size,
                      scope,
                      stride=[1, 1],
@@ -252,7 +252,7 @@ def conv2d_transpose(inputs,
 
       if activation_fn is not None:
         outputs = activation_fn(outputs)
-      return outputs
+      return outputs  # 输出
 
    
 
