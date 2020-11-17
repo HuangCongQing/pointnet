@@ -41,7 +41,7 @@ NUM_CLASSES = 40 # 分类40类别
 SHAPE_NAMES = [line.rstrip() for line in \
     open(os.path.join(BASE_DIR, 'data/modelnet40_ply_hdf5_2048/shape_names.txt'))] # 分类label名
 
-HOSTNAME = socket.gethostname() # ？？？
+HOSTNAME = socket.gethostname() # HOSTNAME
 
 # ModelNet40 official train/test split  官方训练测试文件
 TRAIN_FILES = provider.getDataFiles( \

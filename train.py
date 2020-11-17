@@ -1,3 +1,4 @@
+#coding=utf-8
 import argparse # 程序使用端口指令
 import math
 import h5py
@@ -28,10 +29,10 @@ parser.add_argument('--momentum', type=float, default=0.9, help='Initial learnin
 parser.add_argument('--optimizer', default='adam', help='adam or momentum [default: adam]')
 parser.add_argument('--decay_step', type=int, default=200000, help='Decay step for lr decay [default: 200000]')
 parser.add_argument('--decay_rate', type=float, default=0.7, help='Decay rate for lr decay [default: 0.8]')
-FLAGS = parser.parse_args()
+FLAGS = parser.parse_args() # 
 
 # 参数设置
-BATCH_SIZE = FLAGS.batch_size
+BATCH_SIZE = FLAGS.batch_size #  batch_size default=32
 NUM_POINT = FLAGS.num_point
 MAX_EPOCH = FLAGS.max_epoch  # epoch    default: 250
 BASE_LEARNING_RATE = FLAGS.learning_rate
@@ -41,24 +42,24 @@ OPTIMIZER = FLAGS.optimizer
 DECAY_STEP = FLAGS.decay_step
 DECAY_RATE = FLAGS.decay_rate
 
-MODEL = importlib.import_module(FLAGS.model) # import network module
-MODEL_FILE = os.path.join(BASE_DIR, 'models', FLAGS.model+'.py')
+MODEL = importlib.import_module(FLAGS.model) #动态导入模型 import network module  # '--model', default='pointnet_cls'
+MODEL_FILE = os.path.join(BASE_DIR, 'models', FLAGS.model+'.py') # 模型py文件
 LOG_DIR = FLAGS.log_dir
 if not os.path.exists(LOG_DIR): os.mkdir(LOG_DIR)
-os.system('cp %s %s' % (MODEL_FILE, LOG_DIR)) # bkp of model def
+os.system('cp %s %s' % (MODEL_FILE, LOG_DIR)) # bkp of model def   复制文件到...
 os.system('cp train.py %s' % (LOG_DIR)) # bkp of train procedure
 LOG_FOUT = open(os.path.join(LOG_DIR, 'log_train.txt'), 'w')  # log存储路径
-LOG_FOUT.write(str(FLAGS)+'\n')
+LOG_FOUT.write(str(FLAGS)+'\n') # FLAGS：Namespace(batch_size=32, decay_rate=0.7, decay_step=200000, .......
 
-MAX_NUM_POINT = 2048
-NUM_CLASSES = 40
+MAX_NUM_POINT = 2048  # 最大点数
+NUM_CLASSES = 40   # 分类数
 
 BN_INIT_DECAY = 0.5
 BN_DECAY_DECAY_RATE = 0.5
 BN_DECAY_DECAY_STEP = float(DECAY_STEP)
 BN_DECAY_CLIP = 0.99
 
-HOSTNAME = socket.gethostname()
+HOSTNAME = socket.gethostname()  # 获取本地主机名  # hcq-G5-5590
 
 # ModelNet40 official train/test split
 TRAIN_FILES = provider.getDataFiles( \
@@ -85,32 +86,33 @@ def get_learning_rate(batch):
     return learning_rate        
 
 # 获取Batch Normalization参数（认为限制最大0.00001）
+#  BN会对每一个mini-batch数据的内部进行标准化（normalization）,使输出规范到N（0，1）的正态分布，加快了网络的训练速度,还可以增大学习率。
 def get_bn_decay(batch):
-    bn_momentum = tf.train.exponential_decay(
-                      BN_INIT_DECAY,
-                      batch*BATCH_SIZE,
-                      BN_DECAY_DECAY_STEP,
-                      BN_DECAY_DECAY_RATE,
+    bn_momentum = tf.train.exponential_decay( # tf.train.exponential_decay 指数衰减法
+                      BN_INIT_DECAY, # 0.5
+                      batch*BATCH_SIZE, # batch*batch_size
+                      BN_DECAY_DECAY_STEP,  # 200000  衰减速度
+                      BN_DECAY_DECAY_RATE,# 0.5   学习率衰减系数，通常介于0-1之间。
                       staircase=True)
-    bn_decay = tf.minimum(BN_DECAY_CLIP, 1 - bn_momentum)
+    bn_decay = tf.minimum(BN_DECAY_CLIP, 1 - bn_momentum)  # 0.99
     return bn_decay
 
 # 调用 训练功能函数  和 评估功能函数
 def train():
     with tf.Graph().as_default():
         with tf.device('/gpu:'+str(GPU_INDEX)):
-            pointclouds_pl, labels_pl = MODEL.placeholder_inputs(BATCH_SIZE, NUM_POINT)
+            pointclouds_pl, labels_pl = MODEL.placeholder_inputs(BATCH_SIZE, NUM_POINT) #models/pointnet_cls.py  pointclouds_pl: shape(32, 1024, 3)    label_pl: shape=(32, ) def placeholder_inputs(batch_size, num_point):
             is_training_pl = tf.placeholder(tf.bool, shape=())
-            print(is_training_pl)
+            print(is_training_pl )  # 输出
             
             # Note the global_step=batch parameter to minimize. 
             # That tells the optimizer to helpfully increment the 'batch' parameter for you every time it trains.
-            batch = tf.Variable(0)
+            batch = tf.Variable(0)  # batch ???
             bn_decay = get_bn_decay(batch)
             tf.summary.scalar('bn_decay', bn_decay) #衰减  tf.summary.scalar(),用于收集标量信息
 
             # Get model and loss 
-            pred, end_points = MODEL.get_model(pointclouds_pl, is_training_pl, bn_decay=bn_decay)
+            pred, end_points = MODEL.get_model(pointclouds_pl, is_training_pl, bn_decay=bn_decay) # 一层一层得到网络结构（INPUT BxNx3  Output Bx40）
             loss = MODEL.get_loss(pred, labels_pl, end_points)
             tf.summary.scalar('loss', loss)#代价
 
@@ -123,12 +125,12 @@ def train():
             tf.summary.scalar('learning_rate', learning_rate)
             if OPTIMIZER == 'momentum':
                 optimizer = tf.train.MomentumOptimizer(learning_rate, momentum=MOMENTUM)
-            elif OPTIMIZER == 'adam':
+            elif OPTIMIZER == 'adam':  # 默认adam
                 optimizer = tf.train.AdamOptimizer(learning_rate)
             train_op = optimizer.minimize(loss, global_step=batch)
             
             # Add ops to save and restore all the variables.
-            saver = tf.train.Saver()
+            saver = tf.train.Saver()  # 保存所有变量
             
         # Create a session
         config = tf.ConfigProto()
@@ -140,8 +142,8 @@ def train():
         # Add summary writers
         #merged = tf.merge_all_summaries()
         merged = tf.summary.merge_all()
-        train_writer = tf.summary.FileWriter(os.path.join(LOG_DIR, 'train'),
-                                  sess.graph)
+        train_writer = tf.summary.FileWriter(os.path.join(LOG_DIR, 'train'), # 将训练过程数据保存在filewriter指定的文件中 tf.summary.FileWritter(path,sess.graph)
+                                  sess.graph)  # 
         test_writer = tf.summary.FileWriter(os.path.join(LOG_DIR, 'test'))
 
         # Init variables
@@ -151,21 +153,22 @@ def train():
         #sess.run(init)
         sess.run(init, {is_training_pl: True})
 
+        # 字典（羡慕函数的输入参数）
         ops = {'pointclouds_pl': pointclouds_pl,
                'labels_pl': labels_pl,
                'is_training_pl': is_training_pl,
                'pred': pred,
                'loss': loss,
-               'train_op': train_op,
+               'train_op': train_op, # ???
                'merged': merged,
                'step': batch}
-
-        for epoch in range(MAX_EPOCH):
+        # 大头在这里===============================================================================
+        for epoch in range(MAX_EPOCH):  # 250个epoch
             log_string('**** EPOCH %03d ****' % (epoch))  #LOG信息
-            sys.stdout.flush()
+            sys.stdout.flush() ## 在Linux系统下，必须加入sys.stdout.flush()才能一秒输一个数字，不然，只能程序执行完之后才会一次性输出
              
-            train_one_epoch(sess, ops, train_writer)
-            eval_one_epoch(sess, ops, test_writer)
+            train_one_epoch(sess, ops, train_writer) # 训练功能函数
+            eval_one_epoch(sess, ops, test_writer) # 评估功能函数
             
             # Save the variables to disk.
             if epoch % 10 == 0:  # 10次一循环 #10个EPOCH一次save
@@ -179,11 +182,11 @@ def train_one_epoch(sess, ops, train_writer):
     is_training = True
     
     # Shuffle train files 打乱训练文件
-    train_file_idxs = np.arange(0, len(TRAIN_FILES))
+    train_file_idxs = np.arange(0, len(TRAIN_FILES)) # 5行 h5文件路径
     np.random.shuffle(train_file_idxs)
     
-    for fn in range(len(TRAIN_FILES)):
-        log_string('----' + str(fn) + '-----')
+    for fn in range(len(TRAIN_FILES)):  # 循环5次
+        log_string('----' + str(fn) + '-----')  # ----0-----
         current_data, current_label = provider.loadDataFile(TRAIN_FILES[train_file_idxs[fn]])
         current_data = current_data[:,0:NUM_POINT,:]
         #[楼层,行,列]
@@ -199,8 +202,8 @@ def train_one_epoch(sess, ops, train_writer):
         loss_sum = 0
        
         for batch_idx in range(num_batches):
-            start_idx = batch_idx * BATCH_SIZE
-            end_idx = (batch_idx+1) * BATCH_SIZE
+            start_idx = batch_idx * BATCH_SIZE # 起始idx
+            end_idx = (batch_idx+1) * BATCH_SIZE # 
             
             # Augment batched point clouds by rotation and jittering
             rotated_data = provider.rotate_point_cloud(current_data[start_idx:end_idx, :, :]) #调用provider中rotate_point_cloud

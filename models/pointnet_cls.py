@@ -12,22 +12,22 @@ from transform_nets import input_transform_net, feature_transform_net # 引用T-
 
 # 根据shape向pointclouds_pl, labels_pl中添加float32和int32的占位符   添加float和int的占位符，让pointcloud_pl, label_pl形式符合batchsize
 def placeholder_inputs(batch_size, num_point):
-    pointclouds_pl = tf.placeholder(tf.float32, shape=(batch_size, num_point, 3))
-    labels_pl = tf.placeholder(tf.int32, shape=(batch_size))
+    pointclouds_pl = tf.placeholder(tf.float32, shape=(batch_size, num_point, 3)) # B*N*3
+    labels_pl = tf.placeholder(tf.int32, shape=(batch_size)) # B
     return pointclouds_pl, labels_pl
 
 # 一层一层得到网络结构（INPUT BxNx3  Output Bx40）
 def get_model(point_cloud, is_training, bn_decay=None):
     """ Classification PointNet, input is BxNx3, output Bx40 """
-    batch_size = point_cloud.get_shape()[0].value
-    num_point = point_cloud.get_shape()[1].value
+    batch_size = point_cloud.get_shape()[0].value  # 32
+    num_point = point_cloud.get_shape()[1].value   # 1024个点
     end_points = {}
 
     with tf.variable_scope('transform_net1') as sc:
-        transform = input_transform_net(point_cloud, is_training, bn_decay, K=3)
-    point_cloud_transformed = tf.matmul(point_cloud, transform)
+        transform = input_transform_net(point_cloud, is_training, bn_decay, K=3)  # shape（32， 3， 3）
+    point_cloud_transformed = tf.matmul(point_cloud, transform)  # 矩阵相乘shape（32， 1024， 3） =   shape（32， 1024， 3）  *   shape（32， 3， 3）
     #通过T-net网络
-    input_image = tf.expand_dims(point_cloud_transformed, -1)
+    input_image = tf.expand_dims(point_cloud_transformed, -1)  # shape（32， 1024， 3， 1）  -1代表最后一维度
 
     net = tf_util.conv2d(input_image, 64, [1,3],
                          padding='VALID', stride=[1,1],
